@@ -20,7 +20,7 @@ If you use this code or our paper in your work, please cite [1] with the followi
 
 # Our Related Work
 
-The work of [1] was inpsired by phenomena observed when analyzing our nearly 6.5 million measurements of self-interference in the following papers.
+If you're interested in LoneSTAR, you may also be interested in our other related work, listed below.
 
 [2] I. P. Roberts, A. Chopra, T. Novlan, S. Vishwanath, and J. G. Andrews, "Beamformed Self-Interference Measurements at 28 GHz: Spatial Insights and Angular Spread," _IEEE Trans. Wireless Commun._, Nov. 2022, [PDF](https://ianproberts.com/pdf/pub/bfsi.pdf), [GitHub](https://ianproberts.com/bfsi).
 
@@ -28,9 +28,17 @@ The work of [1] was inpsired by phenomena observed when analyzing our nearly 6.5
 
 [4] I. P. Roberts, A. Chopra, T. Novlan, S. Vishwanath, and J. G. Andrews, "STEER: Beam Selection for Full-Duplex Millimeter Wave Communication Systems," _IEEE Trans. Commun._, Oct. 2022, [PDF](https://ianproberts.com/pdf/pub/steer.pdf), [GitHub](https://ianproberts.com/steer).
 
-These measurements of self-interference were taken at 28 GHz in an anechoic chamber using two colocated 256-element phased arrays mounted on separate sides of an equilateral triangular platform. Please see [2] and [3] for details for a summary of these measurements.
+[2] and [3] invovles the measurement and modeling of mmWave self-interference with 28 GHz phased arrays. [4] leverages a phenomenon observed in [2] to construct a beamforming-based full-duplex solution called STEER.
 
 This related work can be found at https://ianproberts.com.
+
+# Codebook-Based Beam Alignment
+
+
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/52005199/222982499-dd6d1b01-1d13-4f55-8e89-1c1d631ab9b1.svg"/>
+</p>
 
 # What is Self-Interference? 
 
@@ -43,12 +51,21 @@ In mmWave systems, dense antenna arrays containing dozens or even hundreds of in
 They do this by forming very directional beams, focusing energy in a particular direction to increase received signal power. 
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/52005199/222208767-c359fd9d-0fe0-4814-a56b-46d1f3fd306d.svg"/>
+<img src="https://user-images.githubusercontent.com/52005199/222982526-5be5c14f-915b-48c6-a14f-156515d7f816.svg"/>
 </p>
 
-This work is interested in how much self-interference is coupled in full-duplex mmWave systems when using particular transmit and receive beams. Some transmit and receive beams will couple higher self-interference than others; this depends on the steering direction of the beams and on the (unknown) underlying self-interference channel. 
+This work is interested in how much self-interference is coupled in full-duplex mmWave systems when using particular transmit and receive beams. Some transmit and receive beams will couple higher self-interference than others; this depends on the beams and on the underlying self-interference channel. 
 
-# What is STEER?
+# What is LoneSTAR?
+
+Modern mmWave communication systems rely on highly directional beams to deliver sufficient beamforming gain to close the link between devices. 
+In practice, the beam used to close the link between devices is often selected from a set of beams called a codebook.
+In [2], we construct the first beam codebooks for full-duplex mmWave systems, called LoneSTAR codebooks.
+LoneSTAR codebooks deliver high beamforming gain and broad coverage while significantly reducing the self-interference coupled between the transmit and receive beams of a full-duplex mmWave system.
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/52005199/222982332-bd648e5d-db44-4ca1-b207-47f34ae550ef.svg"/>
+</p>
 
 Modern mmWave communication systems rely on beam alignment to deliver sufficient beamforming gain to close the link between devices. 
 In [1], we present the first beam selection methodology for full-duplex mmWave systems, called STEER, that delivers high beamforming gain while significantly reducing the self-interference coupled between the transmit and receive beams. 
