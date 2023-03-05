@@ -193,6 +193,7 @@ The azimuth cut of these beams can be visualized using the following, which prod
 
 ```
 idx_azimuth = find(tx_azel(:,2) == 0);
+figure(1);
 atx.show_beam_codebook_azimuth(F_cbf(:,idx_azimuth));
 rlim([0,Nt]);
 ```
@@ -201,173 +202,139 @@ rlim([0,Nt]);
 <img src="https://user-images.githubusercontent.com/52005199/222983808-61270abe-05fb-4560-9a60-e2dc0565e449.svg"/>
 </p>
 
-### Setting the Size and Resolution of the Transmit and Receive Spatial Neighborhoods
+### Generating an (Estimate of the) Self-Interference Channel Matrix
 
-Recall, STEER will search across some spatial neighborhoods to select transmit and receive beams that offer low self-interference. 
-The size and resolution of the spatial neighborhoods can be defined respectively as follows.
+To easily generate a realization of the self-interference channel, we have included the function `generate_spherical_wave_channel.m`.
+This function can be customized to place the transmit and receive arrays as desired.
+By default, the transmit array is stacked directly above the receive array, with their centers separated by 10 wavelengths; the carrier frequency can be set within `generate_spherical_wave_cahnnel.m`.
 
-```
-% neighborhood size
-Delta_az = 2;
-Delta_el = 2;
+<p align="center">
+<img src="https://user-images.githubusercontent.com/52005199/222985398-a558673c-3123-47fd-afd9-a44582dcc087.svg"/>
+</p>
 
-% neighborhood resolution
-delta_az = 1;
-delta_el = 1;
-```
-
-The transmit and receive spatial neighborhoods have been assumed the same in this example but this can be generalized as desired.
-
-### Constructing Spatial Neighborhoods
-
-The transmit and receive spatial neighborhoods can be independently constructed with the following.
+Then, based on their relative geometry, the spherical-wave channel (an idealized near-field channel) will be generated automatically.
+The code below accomplishes this. 
 
 ```
-% TX and RX neighborhoods
-nbr_tx = construct_neighborhood(Delta_az_tx,Delta_el_tx,delta_az_tx,delta_el_tx);
-nbr_rx = construct_neighborhood(Delta_az_rx,Delta_el_rx,delta_az_rx,delta_el_rx);
-```
-
-The entire joint TX-RX neighborhood is then constructed as follows.
-
-```
-% full TX-RX neighborhood
-nbr = [repmat(nbr_tx,length(nbr_rx(:,1)),1) repelem(nbr_rx,length(nbr_tx(:,1)),1)];
-```
-
-Finally, we sort the neighborhood based on some distance metric. Here we use the sum squared distance of azimuth and elevation of the transmit and receive neighborhoods. Note that this is slightly different than the distance metric used in [1]; other distance metrics can be used as desired.
-
-```
-% sort full neighborhood by distance (can modify distance metric as desired)
-[~,idx] = sort(sum(nbr.^2,2));
-nbr = nbr(idx,:);
-```
-
-### Executing STEER
-
-Before running STEER, a self-interference target should be specified. For example, we used an INR target of -7 dB below (and in [1]).
-Note that lower thresholds will require longer execution time and more measurement overhead in practice.
-
-```
-% set INR target (design parameter)
-INR_tgt_dB = -7; % lower = stricter threshold
-```
-
-STEER is then executed by the following chunk of code. For each possible initial transmit-receive beam selection based on the defined codebooks, STEER searches for the beam pair within the surrounding spatial neighborhood that meets the desired self-interference threshold while minimally deviating from the initial selection. If this threshold cannot be found, STEER will default to the beam pair that minimized self-interference. 
-
-```
-% reset counter
-idx_row = 0;
-
-% reset lookup table
-lut = [];
-
-% for each TX beam in codebook
-for idx_tx = 1:length(txcb_azel)
-    % initial TX steering direction
-    tx_azel = txcb_azel(idx_tx,:);
-    
-    % for each RX beam in codebook
-    for idx_rx = 1:length(rxcb_azel)
-        % initial RX steering direction
-        rx_azel = rxcb_azel(idx_rx,:);
-        
-        % reset min INR
-        INR_min_dB = Inf;
-        
-        % reset counter
-        num_meas = 0;
-                
-        % search over neighborhood
-        for idx_nbr = 1:num_nbr
-            % shift TX direction
-            tx_azel_shift = nbr(idx_nbr,1:2);
-            tx_azel_nbr = tx_azel + tx_azel_shift;
-            
-            % shift RX direction
-            rx_azel_shift = nbr(idx_nbr,3:4);
-            rx_azel_nbr = rx_azel + rx_azel_shift;
-            
-            % measure INR (this depends on either a model or measurements)
-            INR_meas_dB = 3*randn(1);
-            
-            % record number of measurements required
-            num_meas = num_meas + 1;
-            
-            % record nominal INR (with initial selection)
-            if idx_nbr == 1
-                INR_nom_dB = INR_meas_dB;
-            end
-            
-            % check if new minimum INR found
-            if INR_meas_dB < INR_min_dB
-                % record new best INR and steering directions
-                INR_min_dB = INR_meas_dB;
-                tx_azel_opt = tx_azel_nbr;
-                rx_azel_opt = rx_azel_nbr;
-                
-                % check if target met
-                if INR_meas_dB <= INR_tgt_dB
-                    break;
-                end
-            end
-        end
-        
-        % add to lookup table
-        idx_row = idx_row + 1;
-        lut(idx_row,:) = [tx_azel, tx_azel_opt, rx_azel, rx_azel_opt, INR_nom_dB, INR_min_dB, num_meas];
-    end
+channel_type = 'spherical-wave';
+if strcmpi(channel_type,'spherical-wave')
+    % spherical-wave channel
+    H = generate_spherical_wave_channel(atx,arx);
+else
+    % Rayleigh channel
+    H = cgauss_rv(0,1,Nr,Nt);
 end
 ```
 
-Note that the following lines should be replaced with measurements or with a model that you have chosen.
+If you prefer to use a Rayleigh channel, there is the option to use it instead. Other channel models could also be added here if desired.
+
+### Executing LoneSTAR
+
+Before running LoneSTAR, the coverage variances (in dB) must be set using the following.
 
 ```
-% measure INR (this depends on either a model or measurements)
-INR_meas_dB = 3*randn(1);
+% set coverage variance (sigma^2) (in dB)
+sigma_sq_tx_dB = -16;
+sigma_sq_rx_dB = -16;
 ```
 
-Our previous work [2] or [3] could be used to statistically model `INR_meas_dB`. Or you may want to compute `INR_meas_dB` based on some self-interference channel model. If you have collected measurements, you would need to fetch the measured INR corresponding to the particular transmit and receive beams of interest. If you have any questions about this, please reach out to the corresponding author of [1].
+Likewise, the channel estimation error variance (in dB) must be set.
 
-### Output: Lookup Table
+```
+% set channel estimation error variance (epsilon^2) (in dB)
+eps_sq_dB = -40; % set to -Inf for no channel estimation error
+```
 
-The results of STEER are saved in the lookup table `lut`, where each row is a different initial transmit-receive beam selection. Its columns contain the following:
-- cols 1-2: initial TX direction in az-el (degrees)
-- cols 3-4: shifted TX direction in az-el (degrees)
-- cols 5-6: initial RX direction in az-el (degrees)
-- cols 7-8: shifted RX direction in az-el (degrees)
-- col 9: INR (in dB) with initial TX-RX directions
-- col 10: INR (in dB) with shifted TX-RX directions
-- col 11: number of measurements taken
+Let's initialize transmit and receive codebooks as the CBF codebooks we produced earlier.
 
-An example row from `lut` is shown below. 
+```
+% initialize codebooks
+F = F_cbf;
+W = W_cbf;
+```
 
-| Initial TX Az. | Initial TX El. | Shifted TX Az. | Shifted TX El. | Initial RX Az. | Initial RX El. | Shifted RX Az. | Shifted RX El. | Initial INR | Resulting INR | Number of Measurements |
-| :----: | :----: |  :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: | :----: |
-| 16 | 8 | 17 | 6 | 32 | 0 | 31 | -2 | 7.1 | -10.9 | 435 |
+The total coupling power across all transmit-receive beam pairs in the codebooks before running LoneSTAR can be computed as follows.
 
-The initial transmit direction was (16,8). The shifted transmit direction is (17,6). The initial receive direction was (32,0). The shifted receive direction is (31,-2). A shift of (+1,-2) was applied to the transmit beam. A shift of (-1,-2) was applied to the receive beam. These shifts resulted in an INR reduction from 7.1 dB to -10.9 dB. This was the first beam pair found that offered an INR below `INR_tgt_dB` and required 435 measurements to find.
+```
+% print objective before LoneSTAR
+E_init = W' * H * F;
+disp(['Before LoneSTAR: ' num2str(10*log10(norm(E_init,'fro')^2)) ' dB']);
+```
+
+Then, LoneSTAR is executed by solving two convex optimization problems, one for the transmit codebook and one for the receive codebook.
+This is accomplished using CVX, a convex optimization toolbox.
+
+The total coupling power after running LoneSTAR can then be computed as follows.
+
+```
+% print objective of design
+E_post = W' * H * F;
+disp(['After LoneSTAR: ' num2str(10*log10(norm(E_post,'fro')^2)) ' dB']);
+```
+
+### Output: Visualizing a LoneSTAR Codebook
+
+The azimuth cut of the resulting LoneSTAR transmit codebook can be visualized as follows. Comparing this to the CBF codebook illustrates LoneSTAR's ability to maintain high gain and broad coverage.
+
+```
+idx_azimuth = find(tx_azel(:,2) == 0);
+atx.show_beam_codebook_azimuth(F(:,idx_azimuth));
+rlim([0,Nt]);
+```
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/52005199/222985345-409a0a57-88f6-4c90-9886-a9e12f6b5fd6.svg"/>
+</p>
+
+### Output: Self-Interference Coupling Matrix
+
+We can visualize the coupling between each transmit-receive beam pair with and without LoneSTAR using the following.
+
+```
+% for plotting
+min_val = min([10*log10(abs(E_init(:)).^2); 10*log10(abs(E_post(:)).^2)]); 
+max_val = max([10*log10(abs(E_init(:)).^2); 10*log10(abs(E_post(:)).^2)]); 
+
+% compare coupling matrix with and without LoneSTAR
+figure(3);
+subplot(1,2,1);
+imagesc(10*log10(abs(E_init).^2));
+title('Without LoneSTAR');
+xlabel('Transmit Beam Index');
+ylabel('Receive Beam Index');
+c = colorbar('EastOutside');
+c.Label.Interpreter = 'latex';
+c.Label.String = 'Self-Inteference Coupling Factor (dB)';
+caxis([min_val,max_val]);
+axis equal tight;
+subplot(1,2,2);
+imagesc(10*log10(abs(E_post).^2));
+title('With LoneSTAR');
+xlabel('Transmit Beam Index');
+ylabel('Receive Beam Index');
+c = colorbar('EastOutside');
+c.Label.Interpreter = 'latex';
+c.Label.String = 'Self-Inteference Coupling Factor (dB)';
+caxis([min_val,max_val]);
+axis equal tight;
+```
+
+This will produce a figure similar to the following, which highlights LoneSTAR's ability to reduce self-interference between most, if not all, transmit-receive beam pairs.
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/52005199/222985668-39198453-af6c-43ee-abf9-7de90613d5f0.svg"/>
+</p>
 
 ### Output: Self-Interference Distribution
 
-If we plot the CDFs of columns 9 and 10, we can observe the reduction in self-interference offered by STEER across all possible initial transmit-receive beam selections.
+If we plot the CDFs of the self-interference coupling factors in the above matrices, we can further observe the reduction in self-interference offered by LoneSTAR across all possible initial transmit-receive beam selections.
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/52005199/222924224-ab2d5564-72c6-4db5-a523-d1a41141511f.svg"/>
+<img src="https://user-images.githubusercontent.com/52005199/222985682-68d35e52-3891-4a50-91bc-acf503842c3d.svg"/>
 </p>
 
-From this plot, we can see that a median user without STEER has an INR of about 0 dB, whereas with STEER, a median user has an INR of around -7 dB.
+From this plot, we can see that a median user without LoneSTAR couples about 30 dB more self-interference than one with LoneSTAR.
 
-
-### Output: Number of Measurements
-
-If we plot the CDF of column 11, we can see how many measurements are required when executing STEER across all possible initial transmit-receive beam selections.
-
-<p align="center">
-<img src="https://user-images.githubusercontent.com/52005199/222924306-d203a618-8aed-4e82-bf5f-3ef3776ab8fd.svg"/>
-</p>
-
-From this plot, we can see that 50% of the time, STEER requires 65 measurements. Exhaustively searching the entire neighborhood in this example requires 625 measurements (25 candiates in transmit neighborhood times 25 candidates in receive neighborhood).
 
 # Questions and Feedback
 
