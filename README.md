@@ -78,6 +78,10 @@ This repo contains the following MATLAB code:
 
 The `array.m`, `channel.m`, and `channel_spherical_wave.m` objects are all from [MIMO for MATLAB](https://mimoformatlab.com). 
 
+# Preliminaries
+
+Before running `main.m`, you must have [CVX](http://cvxr.com/cvx/) installed. CVX is a MATLAB toolbox for solving convex optimization problems.
+
 # Example Usage
 
 We will now walk through `main.m` to summarize its usage.
