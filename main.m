@@ -1,5 +1,5 @@
 clc; clearvars; close all;
-% cvx_setup;
+cvx_setup;
 
 %% -------------------------------------------------------------------------
 % 1. Create array objects.
@@ -53,7 +53,7 @@ disp(['Number of TX beams: ' num2str(Mt)]);
 disp(['Number of RX beams: ' num2str(Mr)]);
 
 %% -------------------------------------------------------------------------
-% Baseline codebooks are conjugate beamforming (CBF) codebooks.
+% 4. Baseline codebooks are conjugate beamforming (CBF) codebooks.
 % -------------------------------------------------------------------------
 % get array response vectors
 Atx = atx.get_array_response(tx_azel(:,1)*pi/180,tx_azel(:,2)*pi/180);
@@ -73,7 +73,7 @@ atx.show_beam_codebook_azimuth(F_cbf(:,idx_azimuth));
 rlim([0,Nt]);
 
 %% -------------------------------------------------------------------------
-% Create channel matrix (the estimate of the channel).
+% 5. Create channel matrix (the estimate of the channel).
 % -------------------------------------------------------------------------
 channel_type = 'spherical-wave';
 if strcmpi(channel_type,'spherical-wave')
@@ -85,7 +85,7 @@ else
 end
 
 %% -------------------------------------------------------------------------
-% X. Run LoneSTAR.
+% 6. Run LoneSTAR.
 % -------------------------------------------------------------------------
 % set coverage variance (sigma^2) (in dB)
 sigma_sq_tx_dB = -22;
@@ -176,14 +176,14 @@ E_post = W' * H * F;
 disp(['After LoneSTAR: ' num2str(10*log10(norm(E_post,'fro')^2)) ' dB']);
 
 %% -------------------------------------------------------------------------
-% X. Plot the transmit beams steering in the azimuth plane.
+% 7. Plot the transmit beams steering in the azimuth plane.
 % -------------------------------------------------------------------------
 idx_azimuth = find(tx_azel(:,2) == 0);
 atx.show_beam_codebook_azimuth(F(:,idx_azimuth));
 rlim([0,Nt]);
 
 %% -------------------------------------------------------------------------
-% X. Compare the coupling matrix with and without LoneSTAR.
+% 8. Compare the coupling matrix with and without LoneSTAR.
 % -------------------------------------------------------------------------
 % for plotting
 min_val = min([10*log10(abs(E_init(:)).^2); 10*log10(abs(E_post(:)).^2)]); 
@@ -213,7 +213,7 @@ caxis([min_val,max_val]);
 axis equal tight;
 
 %% -------------------------------------------------------------------------
-% X. Compare the CDFs of coupling with and without LoneSTAR.
+% 9. Compare the CDFs of coupling with and without LoneSTAR.
 % -------------------------------------------------------------------------
 figure(4);
 [f,x] = ecdf(10*log10(abs(E_init(:)).^2));

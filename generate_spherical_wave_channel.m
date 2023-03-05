@@ -8,15 +8,15 @@ Nt = atx.num_antennas;
 Nr = arx.num_antennas;
 
 % create copies of the transmit and receive arrays
-atx_pos = copy_object(atx);
-arx_pos = copy_object(arx);
+atx_pos = copy(atx);
+arx_pos = copy(arx);
 
 % vertically stack transmit and receive arrays
 distance_wavelengths = 10;
 atx_pos.translate_array(0,0,distance_wavelengths); % transmit array above receive array
 
 % show arrays
-if true
+if false
     atx_pos.set_marker('bx');
     arx_pos.set_marker('rx');
     show_arrays_3d([atx_pos,arx_pos]);
