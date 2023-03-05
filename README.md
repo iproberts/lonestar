@@ -18,23 +18,13 @@ If you use this code or our paper in your work, please cite [1] with the followi
 }
 ```
 
-# Our Related Work
 
-If you're interested in LoneSTAR, you may also be interested in our other related work, listed below.
-
-[2] I. P. Roberts, A. Chopra, T. Novlan, S. Vishwanath, and J. G. Andrews, "Beamformed Self-Interference Measurements at 28 GHz: Spatial Insights and Angular Spread," _IEEE Trans. Wireless Commun._, Nov. 2022, [PDF](https://ianproberts.com/pdf/pub/bfsi.pdf), [GitHub](https://ianproberts.com/bfsi).
-
-[3] I. P. Roberts, A. Chopra, T. Novlan, S. Vishwanath, and J. G. Andrews, "Spatial and Statistical Modeling of Multi-Panel Millimeter Wave Self-Interference," Submitted to _IEEE J. Sel. Areas Commun._, 2023, [PDF](https://ianproberts.com/pdf/pub/simodel.pdf), [GitHub](https://ianproberts.com/simodel).
-
-[4] I. P. Roberts, A. Chopra, T. Novlan, S. Vishwanath, and J. G. Andrews, "STEER: Beam Selection for Full-Duplex Millimeter Wave Communication Systems," _IEEE Trans. Commun._, Oct. 2022, [PDF](https://ianproberts.com/pdf/pub/steer.pdf), [GitHub](https://ianproberts.com/steer).
-
-[2] and [3] invovles the measurement and modeling of mmWave self-interference with 28 GHz phased arrays. [4] leverages a phenomenon observed in [2] to construct a beamforming-based full-duplex solution called STEER.
-
-This related work can be found at https://ianproberts.com.
 
 # Codebook-Based Beam Alignment
 
-
+Today's mmWave systems---which have operated in a half-duplex fashion thus far---rely on beam alignment to identify beams that deliver high beamforming gain when serving a particular user. 
+This is typically done by sweeping a set of candidate beams (called a codebook) and measuring the reference signal received power (RSRP) for each beam candidate in order to select which is used to close a link. 
+This procedure allows a mmWave system to reliably deliver high beamforming gain without the need for downlink/uplink MIMO channel knowledge, which is expensive to obtain in practice.
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/52005199/222982499-dd6d1b01-1d13-4f55-8e89-1c1d631ab9b1.svg"/>
@@ -50,76 +40,96 @@ This work is particularly focused on self-interference in full-duplex systems op
 In mmWave systems, dense antenna arrays containing dozens or even hundreds of individual antennas are used to overcome high path loss at these high carrier frequencies. 
 They do this by forming very directional beams, focusing energy in a particular direction to increase received signal power. 
 
+Suppose a mmWave system employs separate transmit and receive arrays and attempts to operate in a full-duplex fashion.
+Codebook-based beam alignment will presumably be conducted on its downlink and its uplink.
+In other words, it will select a transmit beam from some transmit codebook and a receive beam from some receive codebook.
+The degree of self-interference coupled depends on the selected beams and the underlying self-interference channel manifesting between the transmit and receive arrays.
+
 <p align="center">
 <img src="https://user-images.githubusercontent.com/52005199/222982526-5be5c14f-915b-48c6-a14f-156515d7f816.svg"/>
 </p>
 
-This work is interested in how much self-interference is coupled in full-duplex mmWave systems when using particular transmit and receive beams. Some transmit and receive beams will couple higher self-interference than others; this depends on the beams and on the underlying self-interference channel. 
-
 # What is LoneSTAR?
 
-Modern mmWave communication systems rely on highly directional beams to deliver sufficient beamforming gain to close the link between devices. 
-In practice, the beam used to close the link between devices is often selected from a set of beams called a codebook.
-In [2], we construct the first beam codebooks for full-duplex mmWave systems, called LoneSTAR codebooks.
+In this work [2], we construct the first beam codebooks for full-duplex mmWave systems, called LoneSTAR codebooks.
 LoneSTAR codebooks deliver high beamforming gain and broad coverage while significantly reducing the self-interference coupled between the transmit and receive beams of a full-duplex mmWave system.
+An example of a transmit codebook designed with LoneSTAR is shown below.
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/52005199/222982332-bd648e5d-db44-4ca1-b207-47f34ae550ef.svg"/>
 </p>
 
-Modern mmWave communication systems rely on beam alignment to deliver sufficient beamforming gain to close the link between devices. 
-In [1], we present the first beam selection methodology for full-duplex mmWave systems, called STEER, that delivers high beamforming gain while significantly reducing the self-interference coupled between the transmit and receive beams. 
+To design codebooks for full-duplex mmWave systems, we formulated an optimization problem that aims to minimize self-interference between all possible beams within the codebooks while constraining the coverage quality the codebooks provide over some pre-defined coverage regions.
 
-STEER does not necessitate changes to conventional beam alignment methodologies nor additional over-the-air feedback, making it compatible with existing cellular standards. 
-Instead, STEER uses conventional beam alignment to identify the general directions beams should be steered, and then it makes use of a minimal number of self-interference measurements to jointly select transmit and receive beams that deliver high gain in these directions while coupling low self-interference. 
+A full-duplex mmWave transceiver can independently select any transmit beam and any receive beam from LoneSTAR codebooks and, with reasonable confidence, can expect low self-interference. 
+LoneSTAR codebooks are designed at the full-duplex transceiver following estimation of the self-interference MIMO channel (which need not be perfect), do not require downlink/uplink MIMO channel knowledge, and do not demand any over-the-air feedback to/from users.
 
-<p align="center">
-<img src="https://user-images.githubusercontent.com/52005199/222922193-67646503-455b-45bf-a573-348fc06e3703.svg"/>
-</p>
-
-In [1], STEER was implemented on an actual industry-grade 28 GHz phased array platform, which showed that full-duplex operation with beams selected by STEER can notably outperform both half-duplex and full-duplex operation with beams chosen via conventional beam selection. 
-For instance, STEER can reliably reduce self-interference by more than 20 dB and improve SINR by more than 10 dB, compared to conventional beam selection. 
-Our experimental results highlight that beam alignment can be used not only to deliver high beamforming gain in full-duplex mmWave systems but also to mitigate self-interference to levels near or below the noise floor, rendering additional self-interference cancellation unnecessary with STEER. 
-
-# How STEER Works
-
-STEER leverages our observations from a recent measurement campaign of mmWave self-interference [2], [3], which showed that small shifts in
-the steering directions of the transmit and receive beams (on the order of one degree) can lead to noteworthy reductions in self-interference. 
-STEER makes use of self-interference measurements across small spatial neighborhoods to jointly select transmit and receive beams at the full-duplex device that offer reduced self-interference while delivering high beamforming gain on the uplink and downlink.
-
-<p align="center">
-<img src="https://user-images.githubusercontent.com/52005199/222922156-2ad6a1c4-55b7-4ee6-9b21-78f32d1b044a.svg"/>
-</p>
-
-Put simply, STEER slightly shifts the transmit and receive beams at a full-duplex mmWave transceiver to reduce self-interference---with the goal being that these slight shifts do not prohibitively degrade downlink or uplink quality (i.e., SNR).
-By maintaining high SNR and reducing self-interference, high SINRs can be achieved with STEER.
+After their construction, LoneSTAR codebooks can be used to conduct beam alignment and serve any downlink-uplink user pair in a full-duplex fashion thereafter with reduced self-interference. 
+Importantly, LoneSTAR accounts for limited phase and amplitude control present in practical analog beamforming networks.
 
 # Contents
 
 This repo contains the following MATLAB code:
  - a main script `main.m` illustrating example usage
- - a function `construct_neighborhood.m` that can be used to construct a spatial neighborhood
+ - an `array.m` object that can be used to construct and interface with antenna arrays
+ - a function `quantize_codebook.m` that quantizes a codebook to some phase and amplitude resolution
+ - a function `generate_spherical_wave_channel.m` that produces a realization of the self-interference channel matrix based on some relative transmit-receive array geometry
+ - `channel.m` and `channel_spherical_wave.m` objects that are used by `generate_spherical_wave_channel.m`
+
+The `array.m`, `channel.m`, and `channel_spherical_wave.m` objects are all from [MIMO for MATLAB](https://mimoformatlab.com). 
 
 # Example Usage
 
 We will now walk through `main.m` to summarize its usage.
 
 Suppose a full-duplex mmWave base station employs a codebook of transmit beams that it uses to conduct downlink beam alignment and a codebook of receive beams that it uses to conduct uplink beam alignment.
-Whichever beams get selected from these codebooks via conventional beam alignment will be used to initialize STEER.
+This script will design these transmit and receive codebooks based on LoneSTAR.
 
-For each transmit-receive beam pair, we can run STEER to jointly select slightly shifted versions of these beams.
-When running STEER, there are five design parameters:
-- size of the transmit neighborhood
-- resolution of the transmit neighborhood
-- size of the receive neighborhood
-- resolution of the receive neighborhood
-- a self-interference target
+When running LoneSTAR, there are five design parameters:
+- transmit coverage region
+- receive coverage region
+- transmit coverage variance
+- receive coverage variance
+- self-interference channel estimation error variance
 
-Note that in [1], we assumed the size and resolution of the transmit and receive neighborhoods to be equal but this can be generalized straightforwardly.
+### Construct Transmit and Receive Arrays
 
-### Define Transmit and Receive Codebooks
+The transmit and receive arrays are assumed to be identical in this example, but this can be generalized straightforwardly. 
+As shown below, the arrays can be created by simply specifying the number of rows and columns in the planar arrays.
+Below, we have assumed 8x8 uniform planar arrays for the transmitter and receiver.
 
-Before running STEER, the transmit and receive codebooks used for conventional beam alignment at the full-duplex base station must be defined.
+```
+% planar array size
+M = 8; % number of rows
+N = 8; % number of columns
+
+% create transmit and receive arrays (custom array object)
+atx = array.create(M,N); % transmit array
+arx = array.create(M,N); % receive array
+
+% number of transmit and receive antennas
+Nt = M * N;
+Nr = M * N;
+```
+
+### Phase and Amplitude Control
+
+Practically, analog beamforming networks use digitally-controlled phase shifters and attenuators to form beams.
+Given this, each phase shifter and attenuator has limited resolution, which must be accounted for. 
+The phase shifter resolution and attenuator resolution (in bits) can be specified using the following.
+
+```
+bits_phase = 6; % phase shifter resolution (Inf for infinite resolution)
+bits_amp = 6; % attenuator resolution (Inf for infinite resolution)
+dB_step = 0.5; % attenuation (in dB) per LSB (log-stepped attenuators)
+```
+
+Along with its resolution, the attenuator's step size is specified using `dB_step`, which is the attenuation (in dB) per least-significant bit.
+The phase shifters have uniform phase quantization.
+
+### Define Transmit and Receive Coverage Regions
+
+Before running LoneSTAR, the transmit and receive codebooks used for conventional beam alignment at the full-duplex base station must be defined.
 This can be done by defining the steering directions of the codebooks' beams. 
 The steering direction of each beam contains a component in azimuth and elevation, as illustrated below.
 
@@ -127,33 +137,69 @@ The steering direction of each beam contains a component in azimuth and elevatio
 <img src="https://user-images.githubusercontent.com/52005199/222922576-377d2020-43aa-4f13-9db8-b9ada9246846.svg"/>
 </p>
 
-In the example below, the transmit and receive codebooks are identical. Each codebook has beams that span in azimuth from -56 deg. to 56 deg. in 8 deg. steps and in elevation from -8 deg. to 8 deg. in 8 deg. steps. This amounts to a total of 45 beams in each codebook, meaning there are 2025 transmit-receive beam pairs.
+In the example below, the transmit and receive coverage regions are identical. Each coverage region spans in azimuth from -56 deg. to 56 deg. in 8 deg. steps and in elevation from -8 deg. to 8 deg. in 8 deg. steps. This amounts to a total of 45 directions in each coverage region. The codebooks we will design will steer in these specified directions, meaning each codebook will have 45 beams.
 
 ```
-% codebooks span azimuth and elevation
+% coverage regions span azimuth and elevation
 az_deg = [-56:8:56].';
 el_deg = [-8:8:8].';
 
-% assume TX and RX codebooks to be the same
-txcb_az = az_deg;
-txcb_el = el_deg;
-rxcb_az = az_deg;
-rxcb_el = el_deg;
+% assume TX and RX coverage regions to be the same
+tx_az = az_deg;
+tx_el = el_deg;
+rx_az = az_deg;
+rx_el = el_deg;
 ```
 
-The azimuth-elevation of each transmit and receive steering direction can then be populated as follows.
+The azimuth-elevation of each transmit and receive coverage direction can then be populated as follows.
 
 ```
-% full TX codebook in az-el
-num_tx_az = length(txcb_az);
-num_tx_el = length(txcb_el);
-txcb_azel = [repmat(txcb_az,num_tx_el,1) repelem(txcb_el,num_tx_az,1)];
+% full TX coverage region in az-el
+num_tx_az = length(tx_az);
+num_tx_el = length(tx_el);
+tx_azel = [repmat(tx_az,num_tx_el,1) repelem(tx_el,num_tx_az,1)];
 
-% full RX codebook in az-el
-num_rx_az = length(rxcb_az);
-num_rx_el = length(rxcb_el);
-rxcb_azel = [repmat(rxcb_az,num_rx_el,1) repelem(rxcb_el,num_rx_az,1)];
+% full RX coverage region in az-el
+num_rx_az = length(rx_az);
+num_rx_el = length(rx_el);
+rx_azel = [repmat(rx_az,num_rx_el,1) repelem(rx_el,num_rx_az,1)];
 ```
+
+### Baseline Codebooks: Conjugate Beamforming Codebooks
+
+A simple way to serve the coverage regions we have defined is using conjugate beamforming (CBF) codeboks. 
+These can be formed as follows by simply fetching the array response vectors in each direction of our coverage regions.
+
+```
+% get array response vectors
+Atx = atx.get_array_response(tx_azel(:,1)*pi/180,tx_azel(:,2)*pi/180);
+Arx = arx.get_array_response(rx_azel(:,1)*pi/180,rx_azel(:,2)*pi/180);
+
+% conjugate beamforming codebooks
+F_cbf = Atx;
+W_cbf = Arx;
+```
+
+We must quantize the beamforming weights in each codebook to ensure they are physically realizable based on our phase shifter and attenuator resolution.
+This is done using the following.
+
+```
+% quantize phase and amplitude of beams
+F_cbf = quantize_codebook(F_cbf,bits_phase,bits_amp,dB_step);
+W_cbf = quantize_codebook(W_cbf,bits_phase,bits_amp,dB_step);
+```
+
+The azimuth cut of these beams can be visualized using the following, which produces the figure below.
+
+```
+idx_azimuth = find(tx_azel(:,2) == 0);
+atx.show_beam_codebook_azimuth(F_cbf(:,idx_azimuth));
+rlim([0,Nt]);
+```
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/52005199/222983808-61270abe-05fb-4560-9a60-e2dc0565e449.svg"/>
+</p>
 
 ### Setting the Size and Resolution of the Transmit and Receive Spatial Neighborhoods
 
@@ -326,6 +372,20 @@ From this plot, we can see that 50% of the time, STEER requires 65 measurements.
 # Questions and Feedback
 
 Feel free to reach out to the corresponding author of [1] with any questions or feedback.
+
+# Our Related Work
+
+If you're interested in LoneSTAR, you may also be interested in our other related work, listed below.
+
+[2] I. P. Roberts, A. Chopra, T. Novlan, S. Vishwanath, and J. G. Andrews, "Beamformed Self-Interference Measurements at 28 GHz: Spatial Insights and Angular Spread," _IEEE Trans. Wireless Commun._, Nov. 2022, [PDF](https://ianproberts.com/pdf/pub/bfsi.pdf), [GitHub](https://ianproberts.com/bfsi).
+
+[3] I. P. Roberts, A. Chopra, T. Novlan, S. Vishwanath, and J. G. Andrews, "Spatial and Statistical Modeling of Multi-Panel Millimeter Wave Self-Interference," Submitted to _IEEE J. Sel. Areas Commun._, 2023, [PDF](https://ianproberts.com/pdf/pub/simodel.pdf), [GitHub](https://ianproberts.com/simodel).
+
+[4] I. P. Roberts, A. Chopra, T. Novlan, S. Vishwanath, and J. G. Andrews, "STEER: Beam Selection for Full-Duplex Millimeter Wave Communication Systems," _IEEE Trans. Commun._, Oct. 2022, [PDF](https://ianproberts.com/pdf/pub/steer.pdf), [GitHub](https://ianproberts.com/steer).
+
+[2] and [3] invovles the measurement and modeling of mmWave self-interference with 28 GHz phased arrays. [4] leverages a phenomenon observed in [2] to construct a beamforming-based full-duplex solution called STEER.
+
+This related work can be found at https://ianproberts.com.
 
 # Acknowledgments
 
